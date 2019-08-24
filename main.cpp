@@ -1,25 +1,20 @@
 //date:2019-8-22
-//todo: 返回编码
 #include <iostream>
 #include <Windows.h>
 #include <conio.h>
 #include <string>
+#include <fstream>
 #include "hacker.h"
 
 #define WAIT_TIME 600
 #define WIDTH  50
 #define HEIGHT 20
 #define MAX_STR 256
+#define FILE_NAME "accounts.txt"
 
 using namespace std;
 
-void init(void)
-{
-	//set window size
-	char cmd[128];
-	sprintf_s(cmd, sizeof(cmd), "mode con cols=%d lines=%d", WIDTH, HEIGHT);
-	system(cmd);
-}
+int main(void);
 
 void printInMid(string msg)
 {
@@ -31,7 +26,15 @@ void printInMid(string msg)
 	cout << msg;
 }
 
-void inputPwd(char account[], int size_a, char password[], int size_p)
+void init(void)
+{
+	//set window size
+	char cmd[128];
+	sprintf_s(cmd, sizeof(cmd), "mode con cols=%d lines=%d", WIDTH, HEIGHT);
+	system(cmd);
+}
+
+void inputPwd(char username[], int size_a, char password[], int size_p)
 {
 	int i = 0;
 	char ret;
@@ -49,7 +52,7 @@ void inputPwd(char account[], int size_a, char password[], int size_p)
 		{
 			//清屏后显示原来的输入结果
 			system("cls");
-			cout << "please input account: " << account << endl;
+			cout << "please input username: " << username << endl;
 			cout << "please input password: ";
 			for (int j = 0; j < i - 1; j++)
 			{
@@ -69,31 +72,48 @@ void inputPwd(char account[], int size_a, char password[], int size_p)
 
 void login(void)
 {
-	char account[MAX_STR]; //char name;
+	char username[MAX_STR]; //char name;
 	char password[MAX_STR]; //char password;
+	string nam_tmp;
+	string pwd_tmp;
+
+	fstream file;
+	file.open(FILE_NAME);
+	if (file.fail())
+	{
+		cout << "Fail to open the file...";
+		Sleep(WAIT_TIME);
+		exit(1);
+	}
 
 	while (1)
 	{
-		cout << "please input account: ";
-		cin >> account;
+		printInMid("---Sign In---");
+		cout << endl;
+
+		cout << "please input username: ";
+		cin >> username;
 
 		cout << "please input password: ";
-		inputPwd(account, sizeof(account), password, sizeof(password));
+		inputPwd(username, sizeof(username), password, sizeof(password));
 
-		//Authority Judgment
-		if (!strcmp(account, "54hk") && !strcmp(password, "123456"))
+		while (!file.fail())
 		{
-			cout << "Success...";
-			Sleep(WAIT_TIME);
-			break;
+			//从account.txt中读取用户名和密码
+			file >> nam_tmp >> pwd_tmp;
+
+			//看是否有一致的用户名和密码
+			if (!strcmp(username, nam_tmp.c_str()) && !strcmp(password, pwd_tmp.c_str()))
+			{
+				cout << "Success...";
+				Sleep(WAIT_TIME);
+				file.close();
+				return;
+			}
 		}
-		else
-		{
-			cout << "Wrong!" << endl;
-			Sleep(WAIT_TIME);
-			system("cls");
-			continue;
-		}
+		cout << "Wrong!" << endl;
+		Sleep(WAIT_TIME);
+		system("cls");
 	}
 }
 
@@ -104,7 +124,9 @@ void menuShow(void)
 		"2.Web Tamper Attack",
 		"3.Web Restore",
 		"4.Attack Record",
-		"5.Exit",
+		"5.Add Account",
+		"6.Switch Account",
+		"7.Exit"
 	};
 
 	//计算空格数
@@ -173,7 +195,7 @@ void TamperAttack()
 	char response[MAXSIZE];
 
 	system("cls");
-	printInMid("---Web Tamper Attack---");
+	printInMid("---WEB TAMPER ATTACK---");
 
 	cout << endl << "input web ID to attack: ";
 	scanf_s("%s", id, sizeof(id));
@@ -197,7 +219,7 @@ void attackRestore(void)
 	char response[MAXSIZE];
 
 	system("cls");
-	printInMid("---Attack Restore---");
+	printInMid("---ATTACK RESTORE---");
 
 	cout << endl << "input web ID to restore: ";
 	scanf_s("%s", id, sizeof(id));
@@ -217,7 +239,7 @@ void attackRecord(void)
 	char response[MAXSIZE];
 
 	system("cls");
-	printInMid("---Attack Record---");
+	printInMid("---ATTACK RECORD---");
 
 	cout << endl << "input web ID: ";
 	scanf_s("%s", id, sizeof(id));
@@ -228,6 +250,39 @@ void attackRecord(void)
 	cout << retStr << endl;
 
 	system("pause");
+}
+
+void addAcct()
+{
+	string username;
+	string password;
+
+	fstream out;
+	out.open(FILE_NAME, ios::app); //为写而打开文件,起始位置设定为文件尾
+	if (out.fail())
+	{
+		cout << endl << "Fail to open the file...";
+		Sleep(WAIT_TIME);
+		exit(1);
+	}
+
+	system("cls");
+	printInMid("---ADD ACCOUNT---");
+	cout << endl << "Input username: ";
+	cin >> username;
+	cout << "Input password: ";
+	cin >> password;
+
+	//写入用户名和密码
+	out << username << "\t\t\t" << password << endl;
+	if (!out.fail())
+	{
+		cout << "Added successfully.";
+		Sleep(WAIT_TIME);
+	}
+	else cout << "Error.";
+
+	out.close();
 }
 
 bool choiceAndWork(void)
@@ -261,6 +316,12 @@ bool choiceAndWork(void)
 			attackRecord();
 			break;
 		case 5:
+			addAcct();
+			break;
+		case 6: //switch account
+			main();
+			break;
+		case 7:
 			return false; // exit
 			break;
 		default:
@@ -278,8 +339,8 @@ int main(void)
 	init();
 	login();
 	while (1)
-		if (!choiceAndWork()) 
-			return 0;
+		if (!choiceAndWork())
+			exit(0);
 
-	return 0;
+	exit(0);
 }
