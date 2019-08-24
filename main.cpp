@@ -182,7 +182,7 @@ void TamperAttack()
 
 	//attack
 	cout << "Tampering Attacking..." << endl;
-	UTF8ToGBK((char*)tamperText.c_str());
+	GBKToUTF8(tamperText);
 	hk_tamper(id, (char*)tamperText.c_str(), response);
 
 	string retStr = UTF8ToGBK(response);
